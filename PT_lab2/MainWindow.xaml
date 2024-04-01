@@ -27,29 +27,15 @@
                 </Menu>
             </ToolBar>
         </DockPanel>
+
+        <ScrollViewer Grid.Row="1" Grid.Column="1">
+            <TextBox x:Name="FileContent" TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+        </ScrollViewer>
         
-        <TreeView Grid.Row="1" Grid.Column="0" Name="treeView" ItemsSource="{Binding}" MouseDoubleClick="treeView_MouseDoubleClick">
-            <TreeView.Resources>
-                <Style TargetType="{x:Type TreeViewItem}">
-                    <Setter Property="IsExpanded" Value="True"/>
-                </Style>
-            </TreeView.Resources>
-            <TreeView.ItemTemplate>
-                <HierarchicalDataTemplate ItemsSource="{Binding Path=Children}">
-                    <TextBlock Text="{Binding Name}"/>
-                </HierarchicalDataTemplate>
-            </TreeView.ItemTemplate>
-            // add context menu to treeview but only for selected item
-            <TreeView.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Add" Click="Add_Click" />
-                    <MenuItem Header="Delete" Click="Delete_Click"/>
-                </ContextMenu>
-            </TreeView.ContextMenu>
+        <TreeView x:Name="FoldersTreeView" Grid.Row="1" Grid.Column="0">
+            <Button Content="Button" VerticalAlignment="Top"/>
         </TreeView>
-
-        <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Center" TextWrapping="Wrap" Text="" VerticalAlignment="Center" Height="400" Width="500"/>
-
+        
     </Grid>
 </Window>
 
