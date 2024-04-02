@@ -1,20 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Windows.Forms;
-using System.Collections.ObjectModel;
 using IOPath = System.IO.Path;
+using System.IO;
+
 
 namespace PT_lab2
 {
@@ -27,7 +16,6 @@ namespace PT_lab2
         {
             InitializeComponent();
             makeTreeView(@"D:\temp");
-
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)
@@ -35,13 +23,12 @@ namespace PT_lab2
             this.Close();
         }
 
-        // create open browse path dialog and add them to TreeViewItem
         private void Open_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.Forms.FolderBrowserDialog folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
             folderBrowserDialog.ShowDialog();
             string path = folderBrowserDialog.SelectedPath;
-            
+
             makeTreeView(path);
         }
 
@@ -63,9 +50,6 @@ namespace PT_lab2
         {
             TreeViewItem item = (TreeViewItem)sender;
             item.ContextMenu = new ContextMenu();
-            MenuItem createMenuItem = new MenuItem();
-            createMenuItem.Header = "Create";
-            createMenuItem.Click += CreateMenuItem_Click;
             MenuItem deleteMenuItem = new MenuItem();
             deleteMenuItem.Header = "Delete";
             deleteMenuItem.Click += DeleteMenuItem_Click;
@@ -73,13 +57,56 @@ namespace PT_lab2
             openMenuItem.Header = "Open";
             openMenuItem.Click += OpenFile_Click;
             item.ContextMenu.Items.Add(openMenuItem);
-            item.ContextMenu.Items.Add(createMenuItem);
             item.ContextMenu.Items.Add(deleteMenuItem);
         }
 
         private void CreateMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            if (FoldersTreeView.SelectedItem is TreeViewItem selectedItem)
+            {
+                var dialog = new Dialog();
+                if (dialog.ShowDialog() == true)
+                {
+                    try
+                    {
+                        string parentPath = selectedItem.Tag.ToString();
+                        string newPath = IOPath.Combine(parentPath, dialog.CreatedName);
 
+                        if (dialog.IsFile)
+                        {
+                            File.Create(newPath).Close();
+                            File.SetAttributes(newPath, dialog.CreatedAttributes);
+                        }
+                        else
+                        {
+                            Directory.CreateDirectory(newPath);
+                            File.SetAttributes(newPath, dialog.CreatedAttributes);
+                        }
+                            
+                        var newItem = new TreeViewItem
+                        {
+                            Header = dialog.CreatedName,
+                            Tag = newPath
+                        };
+
+                        selectedItem.Items.Add(newItem);
+                        if (dialog.IsFile)
+                        {
+                            newItem.MouseRightButtonDown += FileTreeView_MouseRightButtonDown;
+                            System.Windows.MessageBox.Show("Created file successfully", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                        else
+                        {
+                            newItem.MouseRightButtonDown += FoldersTreeView_MouseRightButtonDown;
+                            System.Windows.MessageBox.Show("Created directory successfully", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Windows.MessageBox.Show($"Error creating file or directory: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
         }
 
         private void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
@@ -89,11 +116,33 @@ namespace PT_lab2
             {
                 if (System.IO.Directory.Exists(path))
                 {
-                    System.IO.Directory.Delete(path, true);
+                    try
+                    {
+                        System.IO.Directory.Delete(path, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Windows.MessageBox.Show($"Error deleting directory: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }   
                 }
                 else if (System.IO.File.Exists(path))
                 {
-                    System.IO.File.Delete(path);
+                   try
+                    {
+                        System.IO.File.Delete(path);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Windows.MessageBox.Show($"Error deleting file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }   
+                }
+                if (selectedItem.Parent is TreeViewItem parentItem)
+                {
+                    parentItem.Items.Remove(selectedItem);
+                }
+                else
+                {
+                    FoldersTreeView.Items.Remove(selectedItem);
                 }
                 selectedItem.Items.Clear();
                 FoldersTreeView.Items.Remove(selectedItem);
@@ -106,8 +155,10 @@ namespace PT_lab2
             {
                 if (FoldersTreeView.SelectedItem is TreeViewItem selectedItem && selectedItem.Tag is string filePath)
                 {
+                    FileContent.Text = "";
                     using (var textReader = System.IO.File.OpenText(filePath))
                     {
+                        FileContent.Text = "";
                         string text = textReader.ReadToEnd();
                         FileContent.Text = text;
                     }
@@ -120,71 +171,89 @@ namespace PT_lab2
 
         }
 
-        private void makeTreeView(string path) // TODO
+        private void makeTreeView(string path)
         {
             FoldersTreeView.Items.Clear();
-
-            if (System.IO.Directory.Exists(path))
-            {
-                string[] directories = System.IO.Directory.GetDirectories(path);
-                string[] files = System.IO.Directory.GetFiles(path);
-
-                foreach (string directory in directories)
-                {
-                    TreeViewItem item = new TreeViewItem();
-                    item.Header = IOPath.GetFileName(directory);
-                    item.Tag = directory;
-                    item.MouseRightButtonDown += FoldersTreeView_MouseRightButtonDown;
-                    FoldersTreeView.Items.Add(item);
-                    // add all files in the directory
-                    string[] subFiles = System.IO.Directory.GetFiles(directory);
-                    foreach (string subFile in subFiles)
-                    {
-                        TreeViewItem subItem = new TreeViewItem();
-                        subItem.Header = IOPath.GetFileName(subFile);
-                        subItem.Tag = subFile;
-                        subItem.MouseRightButtonDown += FileTreeView_MouseRightButtonDown;
-                        item.Items.Add(subItem);
-                    }
-                    // add also subdirectories and files
-                    string[] subDirectories = System.IO.Directory.GetDirectories(directory);
-                    foreach (string subDirectory in subDirectories)
-                    {
-                        TreeViewItem subItem = new TreeViewItem();
-                        subItem.Header = IOPath.GetFileName(subDirectory);
-                        subItem.Tag = subDirectory;
-                        subItem.MouseRightButtonDown += FoldersTreeView_MouseRightButtonDown;
-                        item.Items.Add(subItem);
-                        // add all files in the subdirectory
-                        string[] subSubFiles = System.IO.Directory.GetFiles(subDirectory);
-                        foreach (string subFile in subSubFiles)
-                        {
-                            TreeViewItem subSubItem = new TreeViewItem();
-                            subSubItem.Header = IOPath.GetFileName(subFile);
-                            subSubItem.Tag = subFile;
-                            subSubItem.MouseRightButtonDown += FileTreeView_MouseRightButtonDown;
-                            subItem.Items.Add(subSubItem);
-                        }
-                    }
-                }
-            }   
+            AddDirectoryItems(path, FoldersTreeView.Items);
         }
 
-        private void addTreeViewItem(TreeViewItem item, string path)
+        private void AddDirectoryItems(string directoryPath, ItemCollection items)
         {
-            item.Header = IOPath.GetFileName(path);
-            item.Tag = path;
-            item.MouseRightButtonDown += FoldersTreeView_MouseRightButtonDown;
-            FoldersTreeView.Items.Add(item);
-        }
-        // refresh the treeView automatically when the selected item is changed
-        private void FoldersTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
-        {
-            if (FoldersTreeView.SelectedItem is TreeViewItem selectedItem && selectedItem.Tag is string path)
+            if (!System.IO.Directory.Exists(directoryPath))
             {
-                makeTreeView(path);
+                return;
             }
 
+            // Add directories
+            string[] directories = System.IO.Directory.GetDirectories(directoryPath);
+            foreach (string directory in directories)
+            {
+                TreeViewItem directoryItem = new TreeViewItem();
+                directoryItem.Header = System.IO.Path.GetFileName(directory);
+                directoryItem.Tag = directory;
+                directoryItem.MouseRightButtonDown += FoldersTreeView_MouseRightButtonDown;
+                items.Add(directoryItem);
+
+                // Recursively add subdirectories and files
+                AddDirectoryItems(directory, directoryItem.Items);
+            }
+
+            // Add files
+            string[] files = System.IO.Directory.GetFiles(directoryPath);
+            foreach (string file in files)
+            {
+                TreeViewItem fileItem = new TreeViewItem();
+                fileItem.Header = System.IO.Path.GetFileName(file);
+                fileItem.Tag = file;
+                fileItem.MouseRightButtonDown += FileTreeView_MouseRightButtonDown;
+                items.Add(fileItem);
+            }
+        }
+
+        private void FoldersTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            try
+            {
+                String path = "";
+                if (FoldersTreeView.SelectedItem is TreeViewItem selectedItem)
+                {
+                    path = selectedItem.Tag.ToString();
+                }
+                else
+                {
+                    return;
+                }
+
+                FileAttributes attributes = File.GetAttributes(path);
+
+                string attributesString = "";
+
+                if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                    attributesString += "r";
+                else
+                    attributesString += "-";
+
+                if ((attributes & FileAttributes.Archive) == FileAttributes.Archive)
+                    attributesString += "a";
+                else
+                    attributesString += "-";
+
+                if ((attributes & FileAttributes.System) == FileAttributes.System)
+                    attributesString += "s";
+                else
+                    attributesString += "-";
+
+                if ((attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+                    attributesString += "h";
+                else
+                    attributesString += "-";
+
+                attributesTextBlock.Text = attributesString;
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error occurs: {ex.Message}");
+            }
         }
     }
 }
