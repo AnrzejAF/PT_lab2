@@ -123,6 +123,7 @@ namespace PT_lab2
                     catch (Exception ex)
                     {
                         System.Windows.MessageBox.Show($"Error deleting directory: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
                     }   
                 }
                 else if (System.IO.File.Exists(path))
@@ -134,6 +135,7 @@ namespace PT_lab2
                     catch (Exception ex)
                     {
                         System.Windows.MessageBox.Show($"Error deleting file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
                     }   
                 }
                 if (selectedItem.Parent is TreeViewItem parentItem)
