@@ -33,8 +33,9 @@
             <TextBox x:Name="FileContent" TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
         </ScrollViewer>
 
-        <TreeView x:Name="FoldersTreeView" Grid.Row="1" Grid.Column="0" SelectedItemChanged ="FoldersTreeView_SelectedItemChanged">
+        <TreeView x:Name="FoldersTreeView" Grid.Row="1" Grid.Column="0"  ItemsSource="{Binding Root.Items}" SelectedItemChanged ="FoldersTreeView_SelectedItemChanged">
         </TreeView>
+        <!--<TreeView x:Name="DiskTreeView"  Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Root.Items}" />-->
 
         <StatusBar 
             Grid.Row="2"

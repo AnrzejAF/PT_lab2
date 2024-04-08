@@ -12,10 +12,21 @@ namespace PT_lab2
     /// </summary>
     public partial class MainWindow : Window
     {
+        public class FileExplorer : ViewModelBase
+        {
+            public  DirectoryInfoViewModel Root { get; set; }
+            public void OpenRoot(string path)
+            {
+                Root = new DirectoryInfoViewModel();
+                Root.Open(path);
+            }
+        }
+
         public MainWindow()
         {
             InitializeComponent();
-            makeTreeView(@"D:\temp");
+            //makeTreeView(@"D:\temp");
+
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)
@@ -25,11 +36,19 @@ namespace PT_lab2
 
         private void Open_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.Forms.FolderBrowserDialog folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
-            folderBrowserDialog.ShowDialog();
-            string path = folderBrowserDialog.SelectedPath;
+            //System.Windows.Forms.FolderBrowserDialog folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
+            //folderBrowserDialog.ShowDialog();
+            //string path = folderBrowserDialog.SelectedPath;
 
-            makeTreeView(path);
+            //makeTreeView(path);
+            var dlg = new FolderBrowserDialog() { Description = "Select directory cdcdsto open" };
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var path = dlg.SelectedPath;
+                var fileExplorer = new FileExplorer();
+                fileExplorer.OpenRoot(path);
+                DataContext = FoldersTreeView;
+            }
         }
 
         private void FoldersTreeView_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
