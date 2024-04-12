@@ -1,4 +1,4 @@
-﻿using System;
+﻿ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -10,7 +10,7 @@ namespace PT_lab2
 {
     public class ViewModelBase : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged; 
+        public event PropertyChangedEventHandler ? PropertyChanged; 
         protected virtual void NotifyPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

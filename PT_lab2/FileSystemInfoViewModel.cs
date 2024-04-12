@@ -23,19 +23,7 @@ namespace PT_lab2
         }
         private DateTime _lastWriteTime;
 
-        public DateTime LastAccessTime
-        {
-            get { return _lastAccessTime; }
-            set
-            {
-                if (_lastAccessTime != value)
-                {
-                    _lastAccessTime = value;
-                    NotifyPropertyChanged();
-                }
-            }
-        }
-        private DateTime _lastAccessTime;
+        public String Caption { get; set; }
 
         public FileSystemInfo Model
         {
@@ -46,12 +34,12 @@ namespace PT_lab2
                 {
                     _fileSystemInfo = value;
                     this.LastWriteTime = value.LastWriteTime;
-                    this.LastAccessTime = value.LastAccessTime;
+                    this.Caption = value.Name;
 
                     NotifyPropertyChanged();
                 }
             }
         }
-        private FileSystemInfo ?_fileSystemInfo;
+        private FileSystemInfo ? _fileSystemInfo;
     }
 }
