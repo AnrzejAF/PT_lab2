@@ -9,4 +9,20 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="icons\folder-48-closed.png" />
+    <None Remove="icons\folder.png" />
+    <None Remove="icons\txt.png" />
+    <None Remove="icons\zip.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="icons\folder.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="icons\txt.png" />
+    <Resource Include="icons\zip.png" />
+  </ItemGroup>
+
 </Project>

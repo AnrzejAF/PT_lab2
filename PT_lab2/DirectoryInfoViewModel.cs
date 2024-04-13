@@ -47,10 +47,12 @@ namespace PT_lab2
             Watcher.Error += OnWatcherError;
             Watcher.EnableRaisingEvents = true;
         }
+
         public void OnFileSystemChanged(object sender, FileSystemEventArgs e)
         {
             App.Current.Dispatcher.Invoke(() => OnFileSystemChanged(e));
         }
+
         private void OnFileSystemChanged(FileSystemEventArgs e)
         {
             if (e.ChangeType == WatcherChangeTypes.Created)
@@ -106,12 +108,10 @@ namespace PT_lab2
             }
         }
 
-
         private void OnWatcherError(object sender, ErrorEventArgs e)
         {
             // open a dialog box to show the error
             System.Windows.MessageBox.Show(e.GetException().Message);
-
         }
 
         private void AddDirectoryItems(string directoryPath, ObservableCollection<FileSystemInfoViewModel> items)
@@ -159,5 +159,6 @@ namespace PT_lab2
                 items.Add(fileInfoViewModel);
             }
         }
+        
     }
 }

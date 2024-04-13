@@ -8,10 +8,16 @@
 
     <Window.Resources>
         <HierarchicalDataTemplate DataType="{x:Type local:DirectoryInfoViewModel}" ItemsSource="{Binding Items}">
-            <TextBlock Text="{Binding Caption}" FontWeight="Bold"/>
+            <StackPanel Orientation="Horizontal">
+                <Image Width="16" Source="{Binding Icon}"/>
+                <TextBlock Text="{Binding Caption}" Margin="10,0,0,0" FontWeight="Bold" />
+            </StackPanel>
         </HierarchicalDataTemplate>
         <DataTemplate DataType="{x:Type local:FileInfoViewModel}" >
-            <TextBlock Text="{Binding Caption}" />
+            <StackPanel Orientation="Horizontal">
+                <Image Width="16" Source="{Binding Icon}"/>
+                <TextBlock Text="{Binding Caption}" Margin="10,0,0,0" />
+            </StackPanel>
         </DataTemplate>
     </Window.Resources>
     
@@ -38,7 +44,6 @@
             </ToolBar>
         </DockPanel>
         <TreeView x:Name="FoldersTreeView" Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Root.Items}" />
-
     </Grid>
 </Window>
 
