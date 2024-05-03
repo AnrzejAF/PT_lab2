@@ -10,19 +10,42 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Remove="strings.resx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="icons\eng.png" />
     <None Remove="icons\folder-48-closed.png" />
     <None Remove="icons\folder.png" />
+    <None Remove="icons\pl.png" />
     <None Remove="icons\txt.png" />
     <None Remove="icons\zip.png" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Strings.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="icons\eng.png" />
     <Resource Include="icons\folder.png" />
+    <Resource Include="icons\pl.png" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="icons\txt.png" />
     <Resource Include="icons\zip.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>

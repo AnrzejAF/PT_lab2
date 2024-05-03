@@ -4,6 +4,9 @@
              xmlns:local="clr-namespace:PT_lab2"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <ObjectDataProvider x:Key="Strings"
+                            ObjectType="{x:Type local:CultureResources}"
+                            MethodName="GetStringsInstance" />
     </Application.Resources>
+
 </Application>
