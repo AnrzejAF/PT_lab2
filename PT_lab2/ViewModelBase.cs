@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PT_lab2
+namespace Lab2
 {
     public class ViewModelBase : INotifyPropertyChanged
     {

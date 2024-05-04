@@ -1,12 +1,12 @@
-﻿<Application x:Class="PT_lab2.App"
+﻿<Application x:Class="Lab2.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:PT_lab2"
+             xmlns:local="clr-namespace:Lab2"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ObjectDataProvider x:Key="Strings"
-                            ObjectType="{x:Type local:CultureResources}"
-                            MethodName="GetStringsInstance" />
+         ObjectType="{x:Type local:CultureResources}"
+         MethodName="GetStringsInstance" />
+        
     </Application.Resources>
-
 </Application>

@@ -9,25 +9,45 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Shapes;
 
-namespace PT_lab2
+namespace Lab2
 {
     public class DirectoryInfoViewModel : FileSystemInfoViewModel
     {
-        public Exception? Exception { get; private set; }
-
         public ObservableCollection<FileSystemInfoViewModel> Items { get; private set; }
-            = new ObservableCollection<FileSystemInfoViewModel>();
-
-        public FileSystemWatcher? Watcher;
+         = new ObservableCollection<FileSystemInfoViewModel>();
 
         public bool Open(string path)
         {
             bool result = false;
+
             try
             {
-                AddWatcher(path);
+                Watcher = new FileSystemWatcher(path);
 
-                AddDirectoryItems(path, Items);
+                Watcher.Created += OnFileSystemChanged;
+                Watcher.Renamed += OnFileSystemChanged;
+                Watcher.Deleted += OnFileSystemChanged;
+                Watcher.Changed += OnFileSystemChanged;
+                Watcher.Error += Watcher_Error;
+                Watcher.EnableRaisingEvents = true;
+
+                foreach (var dirName in Directory.GetDirectories(path))
+                {
+                    var dirInfo = new DirectoryInfo(dirName);
+                    DirectoryInfoViewModel itemViewModel = new DirectoryInfoViewModel();
+                    itemViewModel.Model = dirInfo;
+                    Items.Add(itemViewModel);
+
+                    itemViewModel.Open(dirName);
+                }
+
+                foreach (var fileName in Directory.GetFiles(path))
+                {
+                    var fileInfo = new FileInfo(fileName);
+                    FileInfoViewModel itemViewModel = new FileInfoViewModel();
+                    itemViewModel.Model = fileInfo;
+                    Items.Add(itemViewModel);
+                }
                 result = true;
             }
             catch (Exception ex)
@@ -37,128 +57,93 @@ namespace PT_lab2
             return result;
         }
 
-        public void AddWatcher(string path)
+        private void Watcher_Error(object sender, ErrorEventArgs e)
         {
-            Watcher = new FileSystemWatcher(path);
-            Watcher.Created += OnFileSystemChanged;
-            Watcher.Renamed += OnFileSystemChanged;
-            Watcher.Deleted += OnFileSystemChanged;
-            Watcher.Changed += OnFileSystemChanged;
-            Watcher.Error += OnWatcherError;
-            Watcher.EnableRaisingEvents = true;
+            Exception = e.GetException();
         }
 
         public void OnFileSystemChanged(object sender, FileSystemEventArgs e)
         {
             App.Current.Dispatcher.Invoke(() => OnFileSystemChanged(e));
         }
-
         private void OnFileSystemChanged(FileSystemEventArgs e)
         {
-            if (e.ChangeType == WatcherChangeTypes.Created)
+            switch (e.ChangeType)
             {
-                if (e.Name != null)
-                {
-                    // if it is a directory add directory with items inside it
-                    if (Directory.Exists(e.FullPath))
+                case WatcherChangeTypes.Created:
+                    if (e is FileSystemEventArgs fileEvent && File.Exists(fileEvent.FullPath))
                     {
-                        var dirInfo = new DirectoryInfo(e.FullPath);
-                        DirectoryInfoViewModel directoryInfoViewModel = new DirectoryInfoViewModel();
-                        directoryInfoViewModel.Model = dirInfo;
-                        directoryInfoViewModel.Items = new ObservableCollection<FileSystemInfoViewModel>();
-
-                        // Recursively add the directory's items to this new collection
-                        AddDirectoryItems(e.FullPath, directoryInfoViewModel.Items);
-
-                        // Finally, add the directory to the passed-in items collection
-                        Items.Add(directoryInfoViewModel);
-
-                        // add recursive call to add files
-                        AddFileItems(e.FullPath, directoryInfoViewModel.Items);
+                        var fileInfo = new FileInfo(fileEvent.FullPath);
+                        FileInfoViewModel itemViewModel = new FileInfoViewModel();
+                        itemViewModel.Model = fileInfo;
+                        Items.Add(itemViewModel);
                     }
-                    else
+                    else if (e is FileSystemEventArgs directoryEvent && Directory.Exists(directoryEvent.FullPath))
                     {
-                        var fileInfo = new FileInfo(e.FullPath);
-                        FileInfoViewModel fileInfoViewModel = new FileInfoViewModel();
-                        fileInfoViewModel.Model = fileInfo;
-                        Items.Add(fileInfoViewModel);  
+                        var dirInfo = new DirectoryInfo(directoryEvent.FullPath);
+                        DirectoryInfoViewModel itemViewModel = new DirectoryInfoViewModel();
+                        itemViewModel.Model = dirInfo;
+                        Items.Add(itemViewModel);
+                        itemViewModel.Open(directoryEvent.FullPath);
                     }
-                }
+                    break;
+                case WatcherChangeTypes.Deleted:
+                    string deletedPath = e.FullPath;
+                    FileSystemInfoViewModel deletedItem = Items.FirstOrDefault(item => item.Model.FullName == deletedPath);
+                    if (deletedItem != null)
+                    {
+                        Items.Remove(deletedItem);
+                    }
+                    break;
+                case WatcherChangeTypes.Changed:
+                    string changedPath = e.FullPath;
+                    FileSystemInfoViewModel changedItem = Items.FirstOrDefault(item => item.Model.FullName == changedPath);
+                    if (changedItem != null)
+                    {
+                        if (changedItem is FileInfoViewModel fileViewModel)
+                        {
+                            var fileInfo = new FileInfo(changedPath);
+                            fileViewModel.Model = fileInfo;
+                        }
+                        else if (changedItem is DirectoryInfoViewModel dirViewModel)
+                        {
+                            var dirInfo = new DirectoryInfo(changedPath);
+                            dirViewModel.Model = dirInfo;
+                        }
+                    }
+                    break;
+                case WatcherChangeTypes.Renamed:
+                    string oldPath = (e as RenamedEventArgs).OldFullPath;
+                    string newPath = e.FullPath;
 
-            }
-            else if (e.ChangeType == WatcherChangeTypes.Deleted)
-            {
-                var item = Items.FirstOrDefault(i => i.Model.FullName == e.FullPath);
-                if (item != null)
-                {
-                    Items.Remove(item);
-                }
-            }
-            else if (e.ChangeType == WatcherChangeTypes.Renamed)
-            {
-                var item = Items.FirstOrDefault(i => i.Model.FullName == e.FullPath);
-                if (item != null)
-                {
-                    Items.Remove(item);
-                    var fileSystemInfo = new FileInfo(e.FullPath);
-                    FileInfoViewModel fileInfoViewModel = new FileInfoViewModel();
-                    fileInfoViewModel.Model = fileSystemInfo;
-                    Items.Add(fileInfoViewModel);
-                }
-            }
-        }
 
-        private void OnWatcherError(object sender, ErrorEventArgs e)
-        {
-            // open a dialog box to show the error
-            System.Windows.MessageBox.Show(e.GetException().Message);
-        }
-
-        private void AddDirectoryItems(string directoryPath, ObservableCollection<FileSystemInfoViewModel> items)
-        {
-            if (!System.IO.Directory.Exists(directoryPath))
-            {
-                return;
-            }
-
-            // Add directories
-            string[] directories = System.IO.Directory.GetDirectories(directoryPath);
-            foreach (string directory in directories)
-            {
-                var dirInfo = new DirectoryInfo(directory);
-                DirectoryInfoViewModel directoryInfoViewModel = new DirectoryInfoViewModel();
-                directoryInfoViewModel.Model = dirInfo;
-                directoryInfoViewModel.Items = new ObservableCollection<FileSystemInfoViewModel>();
-
-                // Recursively add the directory's items to this new collection
-                AddDirectoryItems(directory, directoryInfoViewModel.Items);
-
-                // Finally, add the directory to the passed-in items collection
-                items.Add(directoryInfoViewModel);
-
-                // add recursive call to add files
-                AddFileItems(directory, directoryInfoViewModel.Items);
-            }
-            AddFileItems(directoryPath, items);
-        }
-
-        private void AddFileItems(string directoryPath, ObservableCollection<FileSystemInfoViewModel> items)
-        {
-            if (!System.IO.Directory.Exists(directoryPath))
-            {
-                return;
-            }
-
-            // Add files
-            string[] files = System.IO.Directory.GetFiles(directoryPath);
-            foreach (string file in files)
-            {
-                var fileInfo = new FileInfo(file);
-                FileInfoViewModel fileInfoViewModel = new FileInfoViewModel();
-                fileInfoViewModel.Model = fileInfo;
-                items.Add(fileInfoViewModel);
+                    FileSystemInfoViewModel renamedItem = Items.FirstOrDefault(item => item.Model.FullName == oldPath);
+                    if (renamedItem != null)
+                    {
+                        if (renamedItem is FileInfoViewModel fileViewModel)
+                        {
+                            var fileInfo = new FileInfo(newPath);
+                            FileInfoViewModel itemViewModel = new FileInfoViewModel();
+                            itemViewModel.Model = fileInfo;
+                            Items.Add(itemViewModel);
+                        }
+                        else if (renamedItem is DirectoryInfoViewModel dirViewModel)
+                        {
+                            var dirInfo = new DirectoryInfo(newPath);
+                            DirectoryInfoViewModel itemViewModel = new DirectoryInfoViewModel();
+                            itemViewModel.Model = dirInfo;
+                            Items.Add(itemViewModel);
+                            itemViewModel.Open(newPath);
+                        }
+                        Items.Remove(renamedItem);
+                    }
+                    break;
             }
         }
-        
+
+
+        public Exception Exception { get; private set; }
+        private FileSystemWatcher Watcher;
     }
+
 }
